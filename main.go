@@ -9,12 +9,15 @@ import (
 )
 
 const (
-	CONN_HOST = "10.1.99.196"
-	CONN_PORT = "3333"
 	CONN_TYPE = "tcp"
 )
 
+var CONN_HOST = ""
+var CONN_PORT = "8080"
+
 func main() {
+	// Parse command line args
+	parseArgs(os.Args[1:])
 	// Listen for incoming connections.
 	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
 	if err != nil {
@@ -36,18 +39,36 @@ func main() {
 	}
 }
 
+// Parse arguments
+func parseArgs(args []string) {
+	if len(args) == 0 || (len(args) >= 1 && args[0] == "-h") {
+		printHelp()
+		os.Exit(0)
+	}
+	if len(args) >= 1 {
+		CONN_HOST = args[0]
+	}
+	if len(args) >= 2 {
+		CONN_PORT = args[1]
+	}
+}
+
+func printHelp() {
+	fmt.Println("Usage:")
+	fmt.Println("go run main.go [flags] addr [port]")
+	fmt.Println("Flags:")
+	fmt.Println("\t-h: prints this message")
+	fmt.Println("Arguments:")
+	fmt.Println("\taddr - ip address for server")
+	fmt.Println("\tport - port for server (default is 8080")
+}
+
 // Handles incoming requests.
 func handleRequest(conn net.Conn) {
 	fmt.Println(time.Now())
 	// Make a buffer to hold incoming data.
 	buf := make([]byte, 0, 4096) // big buffer
 	tmp := make([]byte, 1000000)
-	//var buf []byte
-	// Read the incoming connection into the buffer.
-	/*length, err := conn.Read(buf)
-	if err != nil {
-		fmt.Println("Error reading:", err.Error())
-	}*/
 	for {
 		n, err := conn.Read(tmp)
 		if err != nil {
@@ -57,13 +78,9 @@ func handleRequest(conn net.Conn) {
 			fmt.Println("Error, bro:", err)
 			break
 		}
-		//fmt.Println("got", n, "bytes.")
 		buf = append(buf, tmp[:n]...)
-		//fmt.Printf("I read %d bytes\n", n)
 	}
 	fmt.Println(time.Now())
-	//fmt.Println("Message:" + string(buf))
-	//fmt.Println(buf)
 	f, err := os.Create("test.jpg")
 	if err != nil {
 		fmt.Println(err)
